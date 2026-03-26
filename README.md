@@ -28,7 +28,7 @@
 
 1. **Клонируйте репозиторий:**
    ```bash
-   git clone [https://github.com/your-username/study-tracker.git](https://github.com/your-username/study-tracker.git)
+   git clone https://github.com/pou220/StudyTracker.git
    cd study-tracker
    ```
 
