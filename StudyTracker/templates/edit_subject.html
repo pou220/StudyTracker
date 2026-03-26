@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_field %}
+
+{% block title %}Редактировать предмет | StudyTracker{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('main.subjects') }}">Предметы</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">{{ subject.name }}</li>
+            </ol>
+        </nav>
+
+        <article class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent pt-4 pb-0 px-4 border-0">
+                <h1 class="h4 fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-warning me-2"></i>
+                    Редактировать предмет
+                </h1>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <form method="POST" action="{{ url_for('main.edit_subject', subject_id=subject.id) }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.name) }}
+                    {{ render_field(form.target_score, extra_attrs={'min': 0, 'max': 100}) }}
+                    <div class="mb-4">
+                        {{ form.color.label(class="form-label fw-semibold") }}
+                        {{ form.color(class="form-select") }}
+                    </div>
+                    <div class="d-flex gap-2">
+                        {{ form.submit(class="btn btn-warning fw-semibold px-4") }}
+                        <a href="{{ url_for('main.subjects') }}" class="btn btn-outline-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

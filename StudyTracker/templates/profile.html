@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_field %}
+
+{% block title %}Профиль | StudyTracker{% endblock %}
+
+{% block content %}
+<section class="row g-4 justify-content-center">
+    <div class="col-12 col-md-5 col-lg-4">
+        <article class="card border-0 shadow-sm text-center">
+            <div class="card-body py-4">
+                <div class="d-flex justify-content-center mb-3">
+                    {% if current_user.avatar_filename %}
+                        <img
+                            src="{{ url_for('static', filename='uploads/avatars/' ~ current_user.avatar_filename) }}"
+                            alt="Аватар {{ current_user.username }}"
+                            class="avatar-circle"
+                        >
+                    {% else %}
+                        <div class="avatar-placeholder" aria-hidden="true">
+                            {{ current_user.username[0].upper() }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h1 class="h4 fw-bold mb-0">{{ current_user.username }}</h1>
+                <p class="text-muted small mb-3">{{ current_user.email }}</p>
+
+                <hr>
+
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="fw-bold fs-5 text-primary">{{ stats.total_subjects }}</div>
+                        <div class="text-muted" style="font-size:0.7rem;">Предметов</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-5 text-success">{{ stats.completed_tasks }}</div>
+                        <div class="text-muted" style="font-size:0.7rem;">Выполнено</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold fs-5">{{ stats.progress_percent }}%</div>
+                        <div class="text-muted" style="font-size:0.7rem;">Прогресс</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    Регистрация: {{ current_user.created_at | datetime_ru }}
+                </p>
+            </div>
+        </article>
+    </div>
+
+    <div class="col-12 col-md-7 col-lg-5">
+        <article class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <h2 class="h5 fw-bold mb-0">
+                    <i class="bi bi-image text-primary me-2"></i>
+                    Загрузить аватар
+                </h2>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <form method="POST" action="{{ url_for('main.profile') }}" enctype="multipart/form-data" novalidate>
+                    {{ avatar_form.hidden_tag() }}
+                    {{ render_field(avatar_form.avatar, help_text='PNG, JPG, GIF · Максимум 5 МБ', extra_attrs={'accept': 'image/png,image/jpeg,image/gif'}) }}
+
+                    <div id="avatar-preview-container" class="mb-3 d-none">
+                        <p class="form-label text-muted small mb-2">Превью</p>
+                        <img
+                            id="avatar-preview-img"
+                            src="#"
+                            alt="Предпросмотр выбранного аватара"
+                            class="d-block rounded"
+                            style="max-height:120px;max-width:120px;object-fit:cover;"
+                        >
+                    </div>
+
+                    {{ avatar_form.submit(class="btn btn-primary fw-semibold") }}
+                </form>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.querySelector('input[name="avatar"]');
+    var container = document.getElementById('avatar-preview-container');
+    var img = document.getElementById('avatar-preview-img');
+    if (!input || !container || !img) {
+        return;
+    }
+
+    input.addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        if (!file) {
+            container.classList.add('d-none');
+            img.src = '#';
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (event) {
+            img.src = event.target.result;
+            container.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+{% endblock %}

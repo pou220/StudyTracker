@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_field %}
+
+{% block title %}Регистрация | StudyTracker{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        <header class="text-center mb-4">
+            <div class="display-4 mb-2">🎓</div>
+            <h1 class="h3 fw-bold">Создать аккаунт</h1>
+            <p class="text-muted mb-0">Начни отслеживать подготовку к ЕГЭ</p>
+        </header>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('main.register') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.username, extra_attrs={'autocomplete': 'username'}) }}
+                    {{ render_field(form.email, extra_attrs={'autocomplete': 'email'}) }}
+                    {{ render_field(form.password, help_text='Минимум 6 символов, должна быть хотя бы одна цифра.', extra_attrs={'autocomplete': 'new-password'}) }}
+                    {{ render_field(form.confirm_password, extra_attrs={'autocomplete': 'new-password'}) }}
+
+                    <div class="mb-3">
+                        {{ form.target_university.label(class="form-label fw-semibold") }}
+                        {% set target_classes = 'form-select' ~ (' is-invalid' if form.target_university.errors else '') %}
+                        {{ form.target_university(class=target_classes, id='target_university') }}
+                        {% for error in form.target_university.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {{ render_field(form.other_university, wrapper_class='mb-3 d-none', extra_attrs={'id': 'other_university'}) }}
+                    {{ form.submit(class="btn btn-primary w-100 py-2 fw-semibold") }}
+                </form>
+            </div>
+        </div>
+
+        <p class="text-center text-muted mt-3 small mb-0">
+            Уже есть аккаунт?
+            <a href="{{ url_for('main.login') }}" class="text-decoration-none">Войти</a>
+        </p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var universitySelect = document.getElementById('target_university');
+    var otherGroup = document.querySelector('#other_university').closest('.mb-3');
+    if (!universitySelect || !otherGroup) {
+        return;
+    }
+
+    function toggleOtherUniversity() {
+        var isOther = universitySelect.value === 'Другой';
+        otherGroup.classList.toggle('d-none', !isOther);
+    }
+
+    toggleOtherUniversity();
+    universitySelect.addEventListener('change', toggleOtherUniversity);
+});
+</script>
+{% endblock %}

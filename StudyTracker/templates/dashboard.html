@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд | StudyTracker{% endblock %}
+
+{% block content %}
+
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0">
+            Привет, {{ current_user.username }}! 👋
+        </h1>
+        <p class="text-muted mb-0 small d-flex align-items-center gap-2">
+            <span>Подготовка к ЕГЭ · Цель: <strong>{{ current_user.target_university or 'Не указана' }}</strong></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" data-bs-toggle="modal" data-bs-target="#goalModal" title="Изменить цель">
+                <i class="bi bi-pencil"></i> Изменить
+            </button>
+        </p>
+    </div>
+    <a href="{{ url_for('main.subjects') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Добавить предмет
+    </a>
+</div>
+
+
+<div class="row g-3 mb-4">
+
+    
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 text-primary mb-1">
+                    <i class="bi bi-book"></i>
+                </div>
+                <div class="fs-4 fw-bold">{{ stats.total_subjects }}</div>
+                <div class="text-muted small">Предметов</div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 text-success mb-1">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <div class="fs-4 fw-bold">
+                    {{ stats.completed_tasks }}/{{ stats.total_tasks }}
+                </div>
+                <div class="text-muted small">Задач выполнено</div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 text-info mb-1">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="fs-4 fw-bold">{{ stats.progress_percent }}%</div>
+                <div class="text-muted small">Общий прогресс</div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 {{ 'text-danger' if stats.overdue_tasks > 0 else 'text-secondary' }} mb-1">
+                    <i class="bi bi-alarm"></i>
+                </div>
+                <div class="fs-4 fw-bold {{ 'text-danger' if stats.overdue_tasks > 0 else '' }}">
+                    {{ stats.overdue_tasks }}
+                </div>
+                <div class="text-muted small">Просрочено</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 pb-0 pt-3 px-4">
+                <h5 class="fw-semibold mb-0">
+                    <i class="bi bi-bar-chart-steps me-2 text-primary"></i>
+                    Прогресс по предметам
+                </h5>
+            </div>
+            <div class="card-body px-4">
+                {% if subjects %}
+                    {% for subject in subjects %}
+                    <div class="mb-3">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold">
+                                <span
+                                    class="badge rounded-pill me-1"
+                                    style="background-color: {{ subject.color }};"
+                                >&nbsp;</span>
+                                {{ subject.name }}
+                            </span>
+                            <span class="text-muted small">
+                                {{ subject.get_done_tasks_count() }}/{{ subject.tasks|length }}
+                                задач
+                                {% if subject.target_score %}
+                                    · Цель: <strong>{{ subject.target_score }}</strong> б.
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="progress">
+                            <div
+                                class="progress-bar"
+                                role="progressbar"
+                                style="width: {{ subject.get_progress_percent() }}%; background-color: {{ subject.color }};"
+                                aria-valuenow="{{ subject.get_progress_percent() }}"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                            ></div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <small class="text-muted">
+                                {{ subject.get_progress_percent() }}%
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Предметы ещё не добавлены.
+                        <a href="{{ url_for('main.subjects') }}">Добавить первый!</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 pb-0 pt-3 px-4">
+                <h5 class="fw-semibold mb-0">
+                    <i class="bi bi-calendar-event me-2 text-warning"></i>
+                    Ближайшие дедлайны
+                </h5>
+            </div>
+            <div class="card-body px-4">
+                {% if upcoming_tasks %}
+                    <ul class="list-unstyled mb-0">
+                    {% for task in upcoming_tasks %}
+                        <li class="task-item d-flex align-items-start gap-2 py-2
+                            {{ 'border-start border-danger border-2 ps-2' if task.is_overdue() else '' }}
+                        ">
+                            <span class="badge {{ task.get_priority_badge_class() }} mt-1">
+                                &nbsp;
+                            </span>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate small">
+                                    {{ task.title }}
+                                </div>
+                                <div class="text-muted" style="font-size:0.75rem;">
+                                    {{ task.subject.name }}
+                                    {% if task.due_date %}
+                                        · <span class="{{ 'text-danger fw-semibold' if task.is_overdue() else '' }}">
+                                            {{ task.due_date | datetime_ru }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        {% if not loop.last %}
+                            <li><hr class="my-1 opacity-25"></li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-check fs-3 d-block mb-2"></i>
+                        Нет задач с дедлайном. Отлично!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% if high_priority_tasks %}
+<div class="card border-0 shadow-sm border-start border-danger border-3">
+    <div class="card-header bg-transparent border-0 pb-0 pt-3 px-4">
+        <h5 class="fw-semibold mb-0 text-danger">
+            <i class="bi bi-fire me-2"></i>Срочные задачи
+        </h5>
+    </div>
+    <div class="card-body px-4 pb-3">
+        <div class="row g-2">
+        {% for task in high_priority_tasks %}
+            <div class="col-12 col-md-6">
+                <div class="d-flex align-items-center gap-2 p-2 bg-danger bg-opacity-10 rounded">
+                    <i class="bi bi-exclamation-circle-fill text-danger"></i>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fw-semibold text-truncate small">{{ task.title }}</div>
+                        <div class="text-muted" style="font-size:0.75rem;">
+                            {{ task.subject.name }}
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('main.toggle_task', task_id=task.id) }}">
+                        {{ delete_form.hidden_tag() }}
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-success py-0 px-1"
+                            title="Отметить выполненной"
+                        >
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="modal fade" id="goalModal" tabindex="-1" aria-labelledby="goalModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('main.update_goal') }}" method="POST">
+          {{ goal_form.hidden_tag() }}
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold" id="goalModalLabel">Изменить цель поступления</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+                {{ goal_form.target_university.label(class="form-label fw-semibold") }}
+                {{ goal_form.target_university(class="form-select", id="modal_target_university") }}
+            </div>
+            <div class="mb-3" id="modal_other_university_div" style="display: none;">
+                {{ goal_form.other_university.label(class="form-label fw-semibold") }}
+                {{ goal_form.other_university(class="form-control") }}
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Отмена</button>
+            {{ goal_form.submit(class="btn btn-primary") }}
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const select = document.getElementById("modal_target_university");
+    const otherDiv = document.getElementById("modal_other_university_div");
+
+    function toggleOther() {
+        if (select.value === "Другой") {
+            otherDiv.style.display = "block";
+        } else {
+            otherDiv.style.display = "none";
+        }
+    }
+
+    if(select) {
+        select.addEventListener("change", toggleOther);
+        toggleOther();
+    }
+});
+</script>
+{% endblock %}

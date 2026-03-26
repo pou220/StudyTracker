@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %}Предметы | StudyTracker{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0 me-auto">
+        <i class="bi bi-book text-primary me-2"></i>Мои предметы
+    </h1>
+    <span class="badge bg-secondary rounded-pill">
+        {{ subjects|length }}
+    </span>
+</div>
+
+<div class="row g-4">
+
+    
+    <div class="col-12 col-lg-4 order-lg-last">
+        <div class="card border-0 shadow-sm sticky-top" style="top: 72px;">
+            <div class="card-header bg-primary text-white border-0">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-plus-circle me-2"></i>Новый предмет
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.subjects') }}" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label fw-semibold") }}
+                        {{ form.name(
+                            class="form-control " ~ ("is-invalid" if form.name.errors else "")
+                        ) }}
+                        {% for error in form.name.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    
+                    <div class="mb-3">
+                        {{ form.target_score.label(class="form-label fw-semibold") }}
+                        {{ form.target_score(
+                            class="form-control " ~ ("is-invalid" if form.target_score.errors else ""),
+                            min=0, max=100
+                        ) }}
+                        {% for error in form.target_score.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Необязательно. Например: 90</div>
+                    </div>
+
+                    
+                    <div class="mb-4">
+                        {{ form.color.label(class="form-label fw-semibold") }}
+                        {{ form.color(class="form-select") }}
+                        
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <div
+                                id="color-preview"
+                                class="rounded"
+                                style="width:24px;height:24px;background:#0d6efd;border:1px solid #dee2e6;"
+                            ></div>
+                            <span class="text-muted small">Цвет метки</span>
+                        </div>
+                    </div>
+
+                    {{ form.submit(class="btn btn-primary w-100 fw-semibold") }}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="col-12 col-lg-8">
+        {% if subjects %}
+            {% for subject in subjects %}
+            <div
+                class="card border-0 shadow-sm mb-4 subject-card"
+                style="--subject-color: {{ subject.color }};"
+            >
+                <div class="card-header bg-transparent border-bottom d-flex
+                            align-items-center justify-content-between py-3">
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <span
+                            class="badge rounded-circle p-2"
+                            style="background-color:{{ subject.color }};"
+                        ></span>
+                        <h5 class="mb-0 fw-bold">{{ subject.name }}</h5>
+                        {% if subject.target_score %}
+                            <span class="badge bg-light text-dark border small">
+                                Цель: {{ subject.target_score }} б.
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    
+                    <div class="d-flex gap-1">
+                        <a
+                            href="{{ url_for('main.add_task', subject_id=subject.id) }}"
+                            class="btn btn-sm btn-outline-primary"
+                            title="Добавить задачу"
+                        >
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+
+                        <a
+                            href="{{ url_for('main.edit_subject', subject_id=subject.id) }}"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="Редактировать предмет"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Удалить предмет"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteSubjectModal{{ subject.id }}"
+                        >
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body pb-2">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">
+                            Прогресс: {{ subject.get_done_tasks_count() }}/{{ subject.tasks|length }}
+                        </small>
+                        <small class="fw-semibold" style="color:{{ subject.color }};">
+                            {{ subject.get_progress_percent() }}%
+                        </small>
+                    </div>
+                    <div class="progress mb-3">
+                        <div
+                            class="progress-bar"
+                            role="progressbar"
+                            style="width:{{ subject.get_progress_percent() }}%;background-color:{{ subject.color }};"
+                            aria-valuenow="{{ subject.get_progress_percent() }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    
+                    {% if subject.tasks %}
+                        <ul class="list-unstyled mb-0">
+                        {% for task in subject.tasks %}
+                            <li class="task-item d-flex align-items-start gap-2 px-1 py-2 rounded
+                                {{ 'task-done' if task.is_done else '' }}
+                            ">
+                                
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('main.toggle_task', task_id=task.id) }}"
+                                    class="mt-1"
+                                >
+                                    {{ delete_form.hidden_tag() }}
+                                    <button
+                                        type="submit"
+                                        class="btn p-0 border-0 bg-transparent"
+                                        title="{{ 'Отметить невыполненной' if task.is_done else 'Отметить выполненной' }}"
+                                    >
+                                        <i class="bi {{ 'bi-check-circle-fill text-success' if task.is_done else 'bi-circle text-secondary' }} fs-5"></i>
+                                    </button>
+                                </form>
+
+                                
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        
+                                        <span
+                                            class="task-title fw-semibold small"
+                                            role="button"
+                                            style="cursor:pointer;"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#taskDetailModal{{ task.id }}"
+                                            title="Посмотреть детали задачи"
+                                        >
+                                            {{ task.title }}
+                                        </span>
+                                        
+                                        <span class="badge {{ task.get_priority_badge_class() }} small">
+                                            {{ task.priority }}
+                                        </span>
+                                        
+                                        {% if task.is_overdue() %}
+                                            <span class="badge bg-danger small">просрочено</span>
+                                        {% endif %}
+                                        
+                                        {% if task.files %}
+                                            <span
+                                                class="text-muted small"
+                                                title="{{ task.files|length }} файл(ов)"
+                                            >
+                                                <i class="bi bi-paperclip"></i>
+                                                {{ task.files|length }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if task.due_date %}
+                                        <div
+                                            class="small {{ 'text-danger fw-semibold' if task.is_overdue() else 'text-muted' }}"
+                                        >
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            {{ task.due_date | datetime_ru }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                
+                                <div class="d-flex gap-1 flex-shrink-0">
+                                    
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-info py-0 px-1"
+                                        title="Детали задачи"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#taskDetailModal{{ task.id }}"
+                                    >
+                                        <i class="bi bi-eye" style="font-size:0.7rem;"></i>
+                                    </button>
+                                    <a
+                                        href="{{ url_for('main.edit_task', task_id=task.id) }}"
+                                        class="btn btn-sm btn-outline-secondary py-0 px-1"
+                                        title="Редактировать"
+                                    >
+                                        <i class="bi bi-pencil" style="font-size:0.7rem;"></i>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger py-0 px-1"
+                                        title="Удалить"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteTaskModal{{ task.id }}"
+                                    >
+                                        <i class="bi bi-x-lg" style="font-size:0.7rem;"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            {% if not loop.last %}
+                                <li><hr class="my-1 opacity-25"></li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center py-3 text-muted small">
+                            <i class="bi bi-clipboard-plus d-block fs-5 mb-1"></i>
+                            Задач пока нет.
+                            <a href="{{ url_for('main.add_task', subject_id=subject.id) }}">
+                                Добавить задачу
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-transparent text-muted small py-2">
+                    Добавлен {{ subject.created_at | datetime_ru }}
+                </div>
+            </div>
+
+            
+            <div
+                class="modal fade"
+                id="deleteSubjectModal{{ subject.id }}"
+                tabindex="-1"
+                aria-labelledby="deleteSubjectLabel{{ subject.id }}"
+                aria-hidden="true"
+            >
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title text-danger" id="deleteSubjectLabel{{ subject.id }}">
+                                <i class="bi bi-trash3 me-2"></i>Удалить предмет?
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                Вы собираетесь удалить предмет
+                                <strong>«{{ subject.name }}»</strong>
+                                и все {{ subject.tasks|length }} задач к нему.
+                            </p>
+                            <p class="text-danger mb-0">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                Это действие невозможно отменить.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Отмена
+                            </button>
+                            <form
+                                method="POST"
+                                action="{{ url_for('main.delete_subject', subject_id=subject.id) }}"
+                            >
+                                {{ delete_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            {% for task in subject.tasks %}
+            <div
+                class="modal fade"
+                id="deleteTaskModal{{ task.id }}"
+                tabindex="-1"
+                aria-hidden="true"
+            >
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <h6 class="modal-title text-danger">
+                                <i class="bi bi-trash3 me-1"></i>Удалить задачу?
+                            </h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body small">
+                            <strong>«{{ task.title }}»</strong> будет удалена безвозвратно.
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                                Отмена
+                            </button>
+                            <form
+                                method="POST"
+                                action="{{ url_for('main.delete_task', task_id=task.id) }}"
+                            >
+                                {{ delete_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Удалить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div
+                class="modal fade"
+                id="taskDetailModal{{ task.id }}"
+                tabindex="-1"
+                aria-labelledby="taskDetailLabel{{ task.id }}"
+                aria-hidden="true"
+            >
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+
+                        
+                        <div class="modal-header border-0 pb-0">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    
+                                    <span
+                                        class="badge rounded-pill"
+                                        style="background-color:{{ subject.color }}; font-size:0.7rem;"
+                                    >
+                                        {{ subject.name }}
+                                    </span>
+                                    
+                                    <span class="badge {{ task.get_priority_badge_class() }}">
+                                        {{ task.priority }}
+                                    </span>
+                                    
+                                    {% if task.is_done %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-lg me-1"></i>Выполнено
+                                        </span>
+                                    {% elif task.is_overdue() %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-alarm me-1"></i>Просрочено
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <h5
+                                    class="modal-title fw-bold mt-2 mb-0
+                                        {{ 'text-decoration-line-through text-muted' if task.is_done else '' }}"
+                                    id="taskDetailLabel{{ task.id }}"
+                                >
+                                    {{ task.title }}
+                                </h5>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn-close ms-2 align-self-start"
+                                data-bs-dismiss="modal"
+                                aria-label="Закрыть"
+                            ></button>
+                        </div>
+
+                        
+                        <div class="modal-body pt-3">
+
+                            
+                            {% if task.due_date %}
+                                <div class="mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-event text-secondary"></i>
+                                    <span
+                                        class="small {{ 'text-danger fw-semibold' if task.is_overdue() else 'text-muted' }}"
+                                    >
+                                        Дедлайн: {{ task.due_date | datetime_ru }}
+                                    </span>
+                                </div>
+                            {% endif %}
+
+                            
+                            <div class="mb-3">
+                                <h6 class="fw-semibold text-secondary mb-2">
+                                    <i class="bi bi-text-left me-1"></i>Описание
+                                </h6>
+                                {% if task.description %}
+                                    <div
+                                        class="p-3 bg-light rounded border"
+                                        style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;"
+                                    >{{ task.description }}</div>
+                                {% else %}
+                                    <p class="text-muted fst-italic small mb-0">
+                                        Описание не добавлено.
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            
+                            {% if task.files %}
+                                <div>
+                                    <h6 class="fw-semibold text-secondary mb-2">
+                                        <i class="bi bi-paperclip me-1"></i>
+                                        Прикреплённый файл
+                                        {% if task.files|length > 1 %}({{ task.files|length }}){% endif %}
+                                    </h6>
+                                    <div class="row g-2">
+                                    {% for file in task.files %}
+                                        
+                                        {% set ext = file.original_filename.rsplit('.', 1)[-1].lower() %}
+                                        {% set is_image = ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                                        {% set file_url = url_for('main.serve_file', filename='task_files/' ~ file.stored_filename) %}
+
+                                        {% if is_image %}
+                                            
+                                            <div class="col-12">
+                                                <a href="{{ file_url }}" target="_blank" rel="noopener">
+                                                    <img
+                                                        src="{{ file_url }}"
+                                                        alt="{{ file.original_filename }}"
+                                                        class="img-fluid rounded border"
+                                                        style="max-height: 400px; width: 100%; object-fit: contain; background: #f8f9fa;"
+                                                    >
+                                                </a>
+                                                <div class="text-muted small mt-1">
+                                                    <i class="bi bi-image me-1"></i>
+                                                    {{ file.original_filename }}
+                                                    <span class="text-muted">({{ file.get_file_size_kb() }})</span>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            
+                                            <div class="col-12">
+                                                <a
+                                                    href="{{ file_url }}"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="d-flex align-items-center gap-3 p-3 border rounded
+                                                           text-decoration-none text-dark bg-light"
+                                                >
+                                                    <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
+                                                    <div class="min-w-0">
+                                                        <div class="fw-semibold text-truncate small">
+                                                            {{ file.original_filename }}
+                                                        </div>
+                                                        <div class="text-muted" style="font-size:0.75rem;">
+                                                            {{ file.get_file_size_kb() }}
+                                                        </div>
+                                                    </div>
+                                                    <i class="bi bi-box-arrow-up-right ms-auto text-secondary small"></i>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                        
+                        <div class="modal-footer border-0 pt-0 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                Создана {{ task.created_at | datetime_ru }}
+                            </small>
+                            <div class="d-flex gap-2">
+                                <a
+                                    href="{{ url_for('main.edit_task', task_id=task.id) }}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    <i class="bi bi-pencil me-1"></i>Редактировать
+                                </a>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary"
+                                    data-bs-dismiss="modal"
+                                >
+                                    Закрыть
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+
+            {% endfor %}
+            
+
+            {% endfor %}
+
+        {% else %}
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="display-3 mb-3">📚</div>
+                    <h4 class="fw-bold">Предметов пока нет</h4>
+                    <p class="text-muted">
+                        Добавь первый предмет — например,
+                        «Информатика» или «Профильная математика».
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var select = document.querySelector('select[name="color"]');
+        var preview = document.getElementById('color-preview');
+        if (!select || !preview) return;
+
+        function updatePreview() {
+            preview.style.backgroundColor = select.value;
+        }
+        select.addEventListener('change', updatePreview);
+        updatePreview();
+    })();
+</script>
+{% endblock %}

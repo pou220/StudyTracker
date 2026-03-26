@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}413 — Файл слишком большой | StudyTracker{% endblock %}
+{% block content %}
+<section class="text-center py-5">
+    <div class="error-code">413</div>
+    <h1 class="h2 fw-bold mt-2">Файл слишком большой</h1>
+    <p class="text-muted mb-4">
+        Максимальный размер загружаемого файла — <strong>16 МБ</strong>. Сожми файл и попробуй ещё раз.
+    </p>
+    <a href="{{ url_for('main.subjects') }}" class="btn btn-primary px-4">
+        <i class="bi bi-arrow-left me-2"></i>Назад к задачам
+    </a>
+</section>
+{% endblock %}

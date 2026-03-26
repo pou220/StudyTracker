@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_field %}
+
+{% block title %}Редактировать задачу | StudyTracker{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('main.subjects') }}">Предметы</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Редактировать задачу</li>
+            </ol>
+        </nav>
+
+        <article class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent pt-4 pb-0 px-4 border-0">
+                <h1 class="h4 fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-warning me-2"></i>
+                    Редактировать задачу
+                </h1>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <form method="POST" action="{{ url_for('main.edit_task', task_id=task.id) }}" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.title, extra_attrs={'autofocus': True}) }}
+                    {{ render_field(form.description) }}
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            {{ render_field(form.priority, wrapper_class='mb-0', input_class='form-select') }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            {{ render_field(form.due_date, wrapper_class='mb-0') }}
+                        </div>
+                    </div>
+
+                    {% if task.files %}
+                    <section class="mb-3">
+                        <h2 class="h6 fw-semibold">Прикреплённые файлы</h2>
+                        <div class="vstack gap-2">
+                            {% for file in task.files %}
+                            <div class="d-flex align-items-center gap-2 p-2 bg-light rounded">
+                                <i class="bi bi-paperclip text-muted"></i>
+                                <a href="{{ url_for('main.serve_file', filename='task_files/' ~ file.stored_filename) }}" target="_blank" rel="noopener" class="text-truncate small">
+                                    {{ file.original_filename }}
+                                </a>
+                                <span class="text-muted small ms-auto">{{ file.get_file_size_kb() }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-check mt-2 mb-2">
+                            {{ form.delete_file(class="form-check-input") }}
+                            {{ form.delete_file.label(class="form-check-label text-danger small") }}
+                        </div>
+
+                        <p class="form-text mb-0">Загрузи новый файл ниже, чтобы заменить текущий.</p>
+                    </section>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        {{ form.file.label(class="form-label fw-semibold") }}
+                        <div class="input-group">
+                            {% set file_classes = 'form-control' ~ (' is-invalid' if form.file.errors else '') %}
+                            {{ form.file(class=file_classes) }}
+                            <button class="btn btn-outline-secondary" type="button" id="clearFileBtn" title="Убрать файл">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        {% for error in form.file.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        {{ form.submit(class="btn btn-warning fw-semibold px-4") }}
+                        <a href="{{ url_for('main.subjects') }}" class="btn btn-outline-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var clearFileBtn = document.getElementById('clearFileBtn');
+    var fileInput = document.querySelector('input[type="file"]');
+    if (!clearFileBtn || !fileInput) {
+        return;
+    }
+
+    clearFileBtn.addEventListener('click', function () {
+        fileInput.value = '';
+    });
+});
+</script>
+{% endblock %}

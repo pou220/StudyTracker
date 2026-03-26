@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Антистресс | StudyTracker{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6 text-center">
+        <header class="mb-4">
+            <div class="display-3 mb-2">🐶</div>
+            <h1 class="h3 fw-bold">Кнопка антистресса</h1>
+            <p class="text-muted mb-0">
+                Готовиться к ЕГЭ тяжело. Вот случайная собачка — она знает, что ты справишься!
+            </p>
+        </header>
+
+        <figure id="dog-image-container" class="mb-4">
+            {% if dog_result.success %}
+                <img
+                    src="{{ dog_result.image_url }}"
+                    alt="Случайная собака от Dog API"
+                    class="img-fluid"
+                    id="dog-img"
+                >
+            {% else %}
+                <div class="alert alert-warning d-inline-block px-4 py-3 rounded-3">
+                    <i class="bi bi-wifi-off fs-3 d-block mb-2"></i>
+                    {{ dog_result.message }}
+                </div>
+            {% endif %}
+        </figure>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <button id="btn-new-dog" class="btn btn-warning btn-lg fw-semibold px-5" type="button">
+                <i class="bi bi-arrow-clockwise me-2"></i>Ещё собачку!
+            </button>
+
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>На дашборд
+            </a>
+        </div>
+
+        <p class="text-muted small mt-4 mb-0">
+            Просмотрено собачек в этой сессии:
+            <strong id="dog-counter">1</strong>
+        </p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('btn-new-dog');
+    var container = document.getElementById('dog-image-container');
+    var counter = document.getElementById('dog-counter');
+    var count = 1;
+    var apiUrl = "{{ url_for('main.antistress') }}?format=json";
+
+    if (!btn || !container) {
+        return;
+    }
+
+    btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Ищу собачку...';
+
+        fetch(apiUrl, {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                container.innerHTML = '';
+
+                if (data.success) {
+                    var img = document.createElement('img');
+                    img.src = data.image_url;
+                    img.alt = 'Случайная собака от Dog API';
+                    img.className = 'img-fluid';
+                    img.style.cssText = 'max-height:420px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15);opacity:0;transition:opacity 0.4s ease;';
+                    container.appendChild(img);
+                    img.onload = function () {
+                        img.style.opacity = '1';
+                    };
+                    count += 1;
+                    if (counter) {
+                        counter.textContent = count;
+                    }
+                    return;
+                }
+
+                container.innerHTML = '<div class="alert alert-warning d-inline-block px-4 py-3 rounded-3"><i class="bi bi-wifi-off fs-3 d-block mb-2"></i>' + (data.message || 'Ошибка загрузки') + '</div>';
+            })
+            .catch(function (error) {
+                container.innerHTML = '<div class="alert alert-danger d-inline-block px-4 py-3 rounded-3"><i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>Сетевая ошибка: ' + error.message + '</div>';
+            })
+            .finally(function () {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Ещё собачку!';
+            });
+    });
+});
+</script>
+{% endblock %}
