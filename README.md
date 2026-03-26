@@ -42,7 +42,7 @@
    ```
    Для Linux/macOS:
    ```bash
-   source venv/bin/activate
+   source venv/bin/activate.bat
    ```
 
 4. **Установите зависимости:**
@@ -52,7 +52,7 @@
 
 5. **Запустите приложение:**
    ```bash
-   python app.py
+   py app.py
    ```
    После этого приложение будет доступно по адресу `http://127.0.0.1:5000/`.
 
