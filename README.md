@@ -38,11 +38,11 @@
    ```
    Для Windows:
    ```bash
-   venv\Scripts\activate
+   venv\Scripts\activate.bat
    ```
    Для Linux/macOS:
    ```bash
-   source venv/bin/activate.bat
+   source venv/bin/activate
    ```
 
 4. **Установите зависимости:**
