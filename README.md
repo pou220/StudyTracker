@@ -28,27 +28,31 @@
 
 1. **Клонируйте репозиторий:**
    ```bash
-   git clone [https://github.com/your-username/study-tracker.git](https://github.com/your-username/study-tracker.git)
-   cd study-tracker
+   git clone https://github.com/pou220/StudyTracker.git
+   cd StudyTracker/StudyTracker
    ```
 
 2. **Создайте и активируйте виртуальное окружение:**
    ```bash
-   python -m venv venv
-   # Для Windows:
-   venv\Scripts\activate
-   # Для Linux/macOS:
+   py -m venv venv
+   ```
+   Для Windows:
+   ```bash
+   venv\Scripts\activate.bat
+   ```
+   Для Linux/macOS:
+   ```bash
    source venv/bin/activate
    ```
 
-3. **Установите зависимости:**
+4. **Установите зависимости:**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Запустите приложение:**
+5. **Запустите приложение:**
    ```bash
-   python app.py
+   py app.py
    ```
    После этого приложение будет доступно по адресу `http://127.0.0.1:5000/`.
 
