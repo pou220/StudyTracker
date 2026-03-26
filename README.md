@@ -29,7 +29,7 @@
 1. **Клонируйте репозиторий:**
    ```bash
    git clone https://github.com/pou220/StudyTracker.git
-   cd study-tracker
+   cd StudyTracker
    ```
 
 2. **Создайте и активируйте виртуальное окружение:**
