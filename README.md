@@ -30,11 +30,12 @@
    ```bash
    git clone https://github.com/pou220/StudyTracker.git
    cd StudyTracker
+   cd StudyTracker
    ```
 
 2. **Создайте и активируйте виртуальное окружение:**
    ```bash
-   python -m venv venv
+   py -m venv venv
    # Для Windows:
    venv\Scripts\activate
    # Для Linux/macOS:
