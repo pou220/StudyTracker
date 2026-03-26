@@ -29,25 +29,28 @@
 1. **Клонируйте репозиторий:**
    ```bash
    git clone https://github.com/pou220/StudyTracker.git
-   cd StudyTracker
-   cd StudyTracker
+   cd StudyTracker/StudyTracker
    ```
 
 2. **Создайте и активируйте виртуальное окружение:**
    ```bash
    py -m venv venv
-   # Для Windows:
+   ```
+   Для Windows:
+   ```bash
    venv\Scripts\activate
-   # Для Linux/macOS:
+   ```
+   Для Linux/macOS:
+   ```bash
    source venv/bin/activate
    ```
 
-3. **Установите зависимости:**
+4. **Установите зависимости:**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Запустите приложение:**
+5. **Запустите приложение:**
    ```bash
    python app.py
    ```
